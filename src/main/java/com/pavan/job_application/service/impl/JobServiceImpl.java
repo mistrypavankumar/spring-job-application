@@ -1,8 +1,11 @@
 package com.pavan.job_application.service.impl;
 
-import com.pavan.job_application.dto.JobRequest;
-import com.pavan.job_application.dto.JobResponse;
+import com.pavan.job_application.dto.job.JobRequest;
+import com.pavan.job_application.dto.job.JobResponse;
+import com.pavan.job_application.exception.CompanyRequiredException;
+import com.pavan.job_application.model.Company;
 import com.pavan.job_application.model.Job;
+import com.pavan.job_application.repository.CompanyRepository;
 import com.pavan.job_application.repository.JobRepository;
 import com.pavan.job_application.service.JobService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import java.util.Objects;
 public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
+    private final CompanyRepository companyRepository;
 
     @Override
     public List<JobResponse> getAllJobs() {
@@ -29,7 +33,14 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public JobResponse createJob(JobRequest jobRequest) {
+    public JobResponse getJobById(Long id) {
+        Job job = jobRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
+        return mapToResponse(job);
+    }
+
+    @Override
+    @Transactional
+    public JobResponse createJob(Long companyId, JobRequest jobRequest) {
 
         BigDecimal minSalary = jobRequest.getMinSalary();
         BigDecimal maxSalary = jobRequest.getMaxSalary();
@@ -39,12 +50,17 @@ public class JobServiceImpl implements JobService {
                     "Minimum salary must not be greater than maximum salary");
         }
 
+        if (companyId == null) {
+            throw new CompanyRequiredException();
+        }
+
         Job job = Job.builder()
                 .title(jobRequest.getTitle())
                 .description(jobRequest.getDescription())
                 .maxSalary(maxSalary)
                 .minSalary(minSalary)
                 .location(jobRequest.getLocation())
+                .company(findCompany(companyId))
                 .build();
 
         job = jobRepository.save(job);
@@ -75,22 +91,32 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional
     public Boolean deleteJobById(Long id) {
-        Job job = jobRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
+        if(!jobRepository.existsById(id)) {
+            return false;
+        }
         jobRepository.deleteById(id);
         return true;
     }
 
+    private Company findCompany(Long companyId) {
+        return companyRepository.findById(companyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Company not found with id " + companyId));
+    }
+
     private JobResponse mapToResponse(Job job) {
-        return new JobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDescription(),
-                job.getMinSalary(),
-                job.getMaxSalary(),
-                job.getLocation(),
-                job.getCreatedAt(),
-                job.getUpdatedAt()
-        );
+        return JobResponse.builder()
+                .id(job.getId())
+                .title(job.getTitle())
+                .description(job.getDescription())
+                .minSalary(job.getMinSalary())
+                .maxSalary(job.getMaxSalary())
+                .location(job.getLocation())
+                .companyId(job.getCompany() != null ? job.getCompany().getId() : null)
+                .createdAt(job.getCreatedAt())
+                .updatedAt(job.getUpdatedAt())
+                .build();
     }
 }

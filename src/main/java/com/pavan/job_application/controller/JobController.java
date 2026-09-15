@@ -1,7 +1,7 @@
 package com.pavan.job_application.controller;
 
-import com.pavan.job_application.dto.JobRequest;
-import com.pavan.job_application.dto.JobResponse;
+import com.pavan.job_application.dto.job.JobRequest;
+import com.pavan.job_application.dto.job.JobResponse;
 import com.pavan.job_application.service.JobService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,9 +21,14 @@ public class JobController {
         return ResponseEntity.status(HttpStatus.OK).body(jobService.getAllJobs());
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<JobResponse> createJob(@RequestBody JobRequest jobRequest){
-        return ResponseEntity.status(HttpStatus.CREATED).body(jobService.createJob(jobRequest));
+    @GetMapping("/{id}")
+    public ResponseEntity<JobResponse> getJobById(@PathVariable Long id){
+        return ResponseEntity.ok(jobService.getJobById(id));
+    }
+
+    @PostMapping("/{companyId}")
+    public ResponseEntity<JobResponse> createJob(@PathVariable("companyId") Long companyId, @RequestBody JobRequest jobRequest){
+        return ResponseEntity.status(HttpStatus.CREATED).body(jobService.createJob(companyId , jobRequest));
     }
 
     @PutMapping("/{id}")
@@ -32,7 +37,12 @@ public class JobController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteJob(@PathVariable("id") Long id){
-        return ResponseEntity.ok(jobService.deleteJobById(id));
+    public ResponseEntity<String> deleteJob(@PathVariable("id") Long id){
+
+        if(jobService.deleteJobById(id)) {
+            return ResponseEntity.status(HttpStatus.OK).body("Job deleted successfully");
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Job not found");
     }
 }
