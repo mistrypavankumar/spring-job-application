@@ -8,4 +8,6 @@ import java.util.List;
 public interface JobService {
     List<JobResponse> getAllJobs();
     JobResponse createJob(JobRequest jobRequest);
+    JobResponse updateJobById(Long id, JobRequest jobRequest);
+    Boolean deleteJobById(Long id);
 }

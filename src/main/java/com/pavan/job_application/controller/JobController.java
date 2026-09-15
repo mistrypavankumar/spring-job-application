@@ -16,7 +16,7 @@ import java.util.List;
 public class JobController {
     private final JobService jobService;
 
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<List<JobResponse>> getAllJobs(){
         return ResponseEntity.status(HttpStatus.OK).body(jobService.getAllJobs());
     }
@@ -24,5 +24,15 @@ public class JobController {
     @PostMapping("/create")
     public ResponseEntity<JobResponse> createJob(@RequestBody JobRequest jobRequest){
         return ResponseEntity.status(HttpStatus.CREATED).body(jobService.createJob(jobRequest));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<JobResponse> updateJob(@PathVariable("id") Long id, @RequestBody JobRequest jobRequest){
+        return ResponseEntity.status(HttpStatus.OK).body(jobService.updateJobById(id, jobRequest));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Boolean> deleteJob(@PathVariable("id") Long id){
+        return ResponseEntity.ok(jobService.deleteJobById(id));
     }
 }
