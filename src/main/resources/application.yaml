@@ -1,3 +1,21 @@
 spring:
   application:
     name: job-application
+
+  datasource:
+    url: jdbc:postgresql://localhost:8899/db_local
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+      default_batch_fetch_size: 50
+
+server:
+  port: 8080
